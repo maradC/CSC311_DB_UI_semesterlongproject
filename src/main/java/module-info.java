@@ -11,4 +11,6 @@ module com.example.csc311_db_ui_semesterlongproject {
     exports dao;
     opens model;
     exports model;
+    opens service;
+    exports service;
 }
