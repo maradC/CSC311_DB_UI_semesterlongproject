@@ -73,7 +73,11 @@
                 <HBox prefHeight="30.0" prefWidth="892.0" styleClass="admin_section" BorderPane.alignment="CENTER">
                <children>
                   <ProgressBar prefHeight="20.0" prefWidth="822.0" progress="0.0" />
-               </children></HBox>
+               </children>
+
+                </HBox>
+                <Label fx:id="statusLabel" text="" style="-fx-font-size: 14px; -fx-text-fill: green;" layoutX="10" layoutY="550" prefWidth="880" />
+
             </bottom>
          <right>
                 <VBox prefHeight="540.0" prefWidth="202.0" styleClass="text_field_pane" BorderPane.alignment="CENTER">

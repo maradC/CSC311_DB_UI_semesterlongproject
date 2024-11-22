@@ -3,6 +3,7 @@ package viewmodel;
 import com.azure.storage.blob.BlobClient;
 import dao.DbConnectivityClass;
 import dao.StorageUploader;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,6 +24,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import model.Person;
 import service.MyLogger;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,10 +33,23 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
 
 public class DB_GUI_Controller implements Initializable {
 
+    // Add regex patterns for validation
+    private static final Pattern NAME_PATTERN = Pattern.compile("^[A-Za-z'-]{2,50}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DEPARTMENT_PATTERN = Pattern.compile("^[A-Za-z ]{2,50}$");
+
+    // Debounce delay for form validation (300ms)
+    private PauseTransition debounce = new PauseTransition(Duration.millis(300));
+
+    // The StorageUploader instance for blob storage operations
     StorageUploader store = new StorageUploader();
+
+    @FXML
+    private Label statusLabel;
 
     @FXML
     private Button editBtn;
@@ -83,18 +98,28 @@ public class DB_GUI_Controller implements Initializable {
                 updateUIState();
             });
 
-            // Add listeners to form fields for validation
-            first_name.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
-            last_name.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
-            email.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
-            department.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
-            major.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
+            // Add listeners to form fields for validation with debounce
+            setupValidationListeners();
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
+    // Set up listeners with debounce logic
+    private void setupValidationListeners() {
+        first_name.textProperty().addListener((observable, oldValue, newValue) -> setupValidationDelay());
+        last_name.textProperty().addListener((observable, oldValue, newValue) -> setupValidationDelay());
+        email.textProperty().addListener((observable, oldValue, newValue) -> setupValidationDelay());
+        department.textProperty().addListener((observable, oldValue, newValue) -> setupValidationDelay());
+        major.textProperty().addListener((observable, oldValue, newValue) -> setupValidationDelay());
+    }
+
+    // Reset and start the debounce timer each time the user types in a field
+    private void setupValidationDelay() {
+        debounce.setOnFinished(e -> validateForm()); // Trigger validation after the delay
+        debounce.playFromStart(); // Reset and start the timer
+    }
 
     private void updateUIState() {
         Person selectedPerson = tv.getSelectionModel().getSelectedItem();
@@ -104,12 +129,48 @@ public class DB_GUI_Controller implements Initializable {
     }
 
     private void validateForm() {
-        boolean formValid = !first_name.getText().isEmpty() && !last_name.getText().isEmpty()
-                && !email.getText().isEmpty() && !department.getText().isEmpty() && !major.getText().isEmpty();
+        boolean formValid = validateTextField(first_name, NAME_PATTERN, "Invalid first name") &&
+                validateTextField(last_name, NAME_PATTERN, "Invalid last name") &&
+                validateTextField(email, EMAIL_PATTERN, "Invalid email format") &&
+                validateTextField(department, DEPARTMENT_PATTERN, "Invalid department") &&
+                !major.getText().isEmpty();
+
         // Enable the Add button if form is valid
         addBtn.setDisable(!formValid);
     }
 
+    private boolean validateTextField(TextField textField, Pattern pattern, String errorMessage) {
+        String text = textField.getText().trim();
+        boolean isValid = pattern.matcher(text).matches();
+
+        if (!isValid) {
+            textField.setStyle("-fx-border-color: red;");
+            showValidationError(errorMessage);
+        } else {
+            textField.setStyle("");
+        }
+
+        return isValid;
+    }
+
+    private void showValidationError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Validation Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    private void updateStatusMessage(String message, String color) {
+        statusLabel.setText(message);
+        statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: " + color + ";");
+
+        // Optionally, clear the message after a few seconds
+        PauseTransition pause = new PauseTransition(Duration.seconds(3));
+        pause.setOnFinished(event -> statusLabel.setText(""));
+        pause.play();
+    }
+
+    // Add New Record Action
     @FXML
     protected void addNewRecord() {
         Person p = new Person(first_name.getText(), last_name.getText(), department.getText(),
@@ -121,6 +182,7 @@ public class DB_GUI_Controller implements Initializable {
         clearForm();
     }
 
+    // Clear Form Action
     @FXML
     protected void clearForm() {
         first_name.setText("");
@@ -168,7 +230,7 @@ public class DB_GUI_Controller implements Initializable {
         Person p = tv.getSelectionModel().getSelectedItem();
         int index = data.indexOf(p);
         Person p2 = new Person(index + 1, first_name.getText(), last_name.getText(), department.getText(),
-                major.getText(), email.getText(),  imageURL.getText());
+                major.getText(), email.getText(), imageURL.getText());
         cnUtil.editUser(p.getId(), p2);
         data.remove(p);
         data.add(index, p2);
@@ -227,8 +289,8 @@ public class DB_GUI_Controller implements Initializable {
 
     public void darkTheme(ActionEvent actionEvent) {
         try {
-            Stage stage = (Stage) menuBar.getScene().getWindow();
-            Scene scene = stage.getScene();
+            Scene scene = menuBar.getScene();
+            Stage stage = (Stage) scene.getWindow();
             scene.getStylesheets().clear();
             scene.getStylesheets().add(getClass().getResource("/css/darkTheme.css").toExternalForm());
         } catch (Exception e) {
