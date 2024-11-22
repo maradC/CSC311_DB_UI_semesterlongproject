@@ -29,7 +29,6 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -38,17 +37,28 @@ public class DB_GUI_Controller implements Initializable {
     StorageUploader store = new StorageUploader();
 
     @FXML
-    TextField first_name, last_name, department, major, email, imageURL;
+    private Button editBtn;
     @FXML
-    ImageView img_view;
+    private Button delBtn;
     @FXML
-    MenuBar menuBar;
+    private Button addBtn;
+
+    @FXML
+    private ProgressBar progressBar;
+
+    @FXML
+    private TextField first_name, last_name, department, major, email, imageURL;
+    @FXML
+    private ImageView img_view;
+    @FXML
+    private MenuBar menuBar;
     @FXML
     private TableView<Person> tv;
     @FXML
     private TableColumn<Person, Integer> tv_id;
     @FXML
     private TableColumn<Person, String> tv_fn, tv_ln, tv_department, tv_major, tv_email;
+
     private final DbConnectivityClass cnUtil = new DbConnectivityClass();
     private final ObservableList<Person> data = cnUtil.getData();
 
@@ -62,22 +72,53 @@ public class DB_GUI_Controller implements Initializable {
             tv_major.setCellValueFactory(new PropertyValueFactory<>("major"));
             tv_email.setCellValueFactory(new PropertyValueFactory<>("email"));
             tv.setItems(data);
+
+            // Initially disable buttons
+            editBtn.setDisable(true);
+            delBtn.setDisable(true);
+            addBtn.setDisable(true);
+
+            // Add listeners to the TableView for selection change
+            tv.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+                updateUIState();
+            });
+
+            // Add listeners to form fields for validation
+            first_name.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
+            last_name.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
+            email.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
+            department.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
+            major.textProperty().addListener((observable, oldValue, newValue) -> validateForm());
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
+
+    private void updateUIState() {
+        Person selectedPerson = tv.getSelectionModel().getSelectedItem();
+        boolean recordSelected = selectedPerson != null;
+        editBtn.setDisable(!recordSelected);
+        delBtn.setDisable(!recordSelected);
+    }
+
+    private void validateForm() {
+        boolean formValid = !first_name.getText().isEmpty() && !last_name.getText().isEmpty()
+                && !email.getText().isEmpty() && !department.getText().isEmpty() && !major.getText().isEmpty();
+        // Enable the Add button if form is valid
+        addBtn.setDisable(!formValid);
+    }
+
     @FXML
     protected void addNewRecord() {
-
-            Person p = new Person(first_name.getText(), last_name.getText(), department.getText(),
-                    major.getText(), email.getText(), imageURL.getText());
-            cnUtil.insertUser(p);
-            cnUtil.retrieveId(p);
-            p.setId(cnUtil.retrieveId(p));
-            data.add(p);
-            clearForm();
-
+        Person p = new Person(first_name.getText(), last_name.getText(), department.getText(),
+                major.getText(), email.getText(), imageURL.getText());
+        cnUtil.insertUser(p);
+        cnUtil.retrieveId(p);
+        p.setId(cnUtil.retrieveId(p));
+        data.add(p);
+        clearForm();
     }
 
     @FXML
@@ -148,6 +189,10 @@ public class DB_GUI_Controller implements Initializable {
         File file = (new FileChooser()).showOpenDialog(img_view.getScene().getWindow());
         if (file != null) {
             img_view.setImage(new Image(file.toURI().toString()));
+
+            Task<Void> uploadTask = createUploadTask(file, progressBar);
+            progressBar.progressProperty().bind(uploadTask.progressProperty());
+            new Thread(uploadTask).start();
         }
     }
 
@@ -175,8 +220,6 @@ public class DB_GUI_Controller implements Initializable {
             scene.getStylesheets().add(getClass().getResource("/css/lightTheme.css").toExternalForm());
             stage.setScene(scene);
             stage.show();
-            System.out.println("light " + scene.getStylesheets());
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -236,9 +279,6 @@ public class DB_GUI_Controller implements Initializable {
             this.major = venue;
         }
     }
-    Task<Void> uploadTask = createUploadTask(file, progressBar);
-    progressBar.progressProperty().bind(uploadTask.progressProperty());
-                new Thread(uploadTask).start();
 
     private Task<Void> createUploadTask(File file, ProgressBar progressBar) {
         return new Task<>() {
@@ -268,5 +308,4 @@ public class DB_GUI_Controller implements Initializable {
             }
         };
     }
-
 }
