@@ -146,12 +146,16 @@ public class DB_GUI_Controller implements Initializable {
         if (!isValid) {
             textField.setStyle("-fx-border-color: red;");
             showValidationError(errorMessage);
+
+            // Update the status bar with the error message
+            updateStatusMessage(errorMessage, "red");
         } else {
             textField.setStyle("");
         }
 
         return isValid;
     }
+
 
     private void showValidationError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -162,7 +166,7 @@ public class DB_GUI_Controller implements Initializable {
     }
     private void updateStatusMessage(String message, String color) {
         statusLabel.setText(message);
-        statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: " + color + ";");
+        statusLabel.setStyle("-fx-font-size: 25px; -fx-text-fill: " + color + ";");
 
         // Optionally, clear the message after a few seconds
         PauseTransition pause = new PauseTransition(Duration.seconds(3));
@@ -180,6 +184,8 @@ public class DB_GUI_Controller implements Initializable {
         p.setId(cnUtil.retrieveId(p));
         data.add(p);
         clearForm();
+        // Set the status message to inform the user about the success
+        updateStatusMessage("Record added successfully!", "green");
     }
 
     // Clear Form Action
@@ -235,6 +241,9 @@ public class DB_GUI_Controller implements Initializable {
         data.remove(p);
         data.add(index, p2);
         tv.getSelectionModel().select(index);
+        updateStatusMessage("Record updated successfully!", "green");
+
+
     }
 
     @FXML
@@ -244,6 +253,8 @@ public class DB_GUI_Controller implements Initializable {
         cnUtil.deleteRecord(p);
         data.remove(index);
         tv.getSelectionModel().select(index);
+        // Inform the user about the deletion
+        updateStatusMessage("Record deleted successfully.", "green");
     }
 
     @FXML
