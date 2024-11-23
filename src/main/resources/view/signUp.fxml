@@ -53,17 +53,13 @@
         <Label text="Password:" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
         <PasswordField fx:id="passwordField" promptText="Enter Password" GridPane.columnIndex="2" GridPane.rowIndex="4" prefWidth="300" />
 
-        <!-- Email Label and TextField -->
-        <Label text="Email:" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-        <TextField fx:id="emailField" promptText="Enter Email" GridPane.columnIndex="2" GridPane.rowIndex="5" prefWidth="300" />
-
         <!-- DOB Label and DatePicker -->
-        <Label text="Date of Birth:" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-        <DatePicker fx:id="dobField" GridPane.columnIndex="2" GridPane.rowIndex="6" prefWidth="300" />
+        <Label text="Date of Birth:" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+        <DatePicker fx:id="dobField" GridPane.columnIndex="2" GridPane.rowIndex="5" prefWidth="300" />
 
         <!-- RAM ID Label and TextField -->
-        <Label text="RAM ID:" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
-        <TextField fx:id="ramIdField" promptText="Enter RAM ID" GridPane.columnIndex="2" GridPane.rowIndex="7" prefWidth="300" />
+        <Label text="RAM ID:" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+        <TextField fx:id="ramIdField" promptText="Enter RAM ID" GridPane.columnIndex="2" GridPane.rowIndex="6" prefWidth="300" />
 
 
         <VBox alignment="CENTER_RIGHT" fillWidth="false" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
