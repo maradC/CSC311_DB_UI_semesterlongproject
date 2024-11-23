@@ -1,5 +1,6 @@
 package viewmodel;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -9,7 +10,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
+import service.UserSession;  // Import UserSession class
 
 import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
@@ -31,6 +34,31 @@ public class SignUpController {
     private static final Pattern RAM_ID_PATTERN = Pattern.compile("^R\\d{8,10}$");  // RAM ID: Starts with 'R' followed by 8-10 digits
 
     public SignUpController() {
+    }
+
+    // Initialize the mouse click events for fields
+    public void initialize() {
+        Platform.runLater(() -> usernameField.requestFocus());
+
+        usernameField.setOnMouseClicked(this::onFieldSelected);
+        passwordField.setOnMouseClicked(this::onFieldSelected);
+        dobField.setOnMouseClicked(this::onFieldSelected);
+        ramIdField.setOnMouseClicked(this::onFieldSelected);
+    }
+
+    // Event handler for mouse click on any field
+    @FXML
+    private void onFieldSelected(MouseEvent event) {
+        System.out.println("Field clicked: " + event.getSource());
+        if (event.getSource() == usernameField) {
+            validateUsername(usernameField.getText());
+        } else if (event.getSource() == passwordField) {
+            validatePassword(passwordField.getText());
+        } else if (event.getSource() == dobField) {
+            validateDob(dobField.getText().trim());
+        } else if (event.getSource() == ramIdField) {
+            validateRamId(ramIdField.getText().trim());
+        }
     }
 
     // Validate username field using regex pattern
@@ -97,6 +125,9 @@ public class SignUpController {
         prefs.put("password", password); // NOTE: Hash and salt the password in production
         prefs.put("dob", dob);
         prefs.put("ramId", ramId);
+
+        // Create a new UserSession instance and save session details
+        UserSession session = UserSession.getInstance(username, password, "NONE");
 
         // Show success message
         showAlert("Success", "Account created successfully!");
