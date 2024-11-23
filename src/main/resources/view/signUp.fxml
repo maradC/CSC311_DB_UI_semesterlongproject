@@ -47,19 +47,19 @@
         </HBox>
         <!-- Username Label and TextField -->
         <Label text="Username:" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-        <TextField fx:id="usernameField" promptText="Enter Username" GridPane.columnIndex="2" GridPane.rowIndex="3" prefWidth="300" />
+        <TextField fx:id="usernameField" promptText="Enter Username" GridPane.columnIndex="2" GridPane.rowIndex="3" prefWidth="300" onMouseClicked="#onFieldSelected"/>
 
         <!-- Password Label and PasswordField -->
         <Label text="Password:" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-        <PasswordField fx:id="passwordField" promptText="Enter Password" GridPane.columnIndex="2" GridPane.rowIndex="4" prefWidth="300" />
+        <PasswordField fx:id="passwordField" promptText="Enter Password" GridPane.columnIndex="2" GridPane.rowIndex="4" prefWidth="300" onMouseClicked="#onFieldSelected"/>
 
-        <!-- DOB Label and DatePicker -->
         <Label text="Date of Birth:" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-        <DatePicker fx:id="dobField" GridPane.columnIndex="2" GridPane.rowIndex="5" prefWidth="300" />
+        <TextField fx:id="dobField" promptText="YYYY-MM-DD" GridPane.columnIndex="2" GridPane.rowIndex="5" prefWidth="300"/>
 
         <!-- RAM ID Label and TextField -->
         <Label text="RAM ID:" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-        <TextField fx:id="ramIdField" promptText="Enter RAM ID" GridPane.columnIndex="2" GridPane.rowIndex="6" prefWidth="300" />
+        <TextField fx:id="ramIdField" promptText="Enter RAM ID" GridPane.columnIndex="2" GridPane.rowIndex="6" prefWidth="300" onMouseClicked="#onFieldSelected"/>
+
 
 
         <VBox alignment="CENTER_RIGHT" fillWidth="false" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
