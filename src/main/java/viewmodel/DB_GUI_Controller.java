@@ -31,7 +31,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Scanner;
 import java.util.regex.Pattern;
+
 
 public class DB_GUI_Controller implements Initializable {
 
@@ -55,6 +57,8 @@ public class DB_GUI_Controller implements Initializable {
     private Button delBtn;
     @FXML
     private Button addBtn;
+    @FXML
+    TextField statusText;
 
     @FXML
     private ProgressBar progressBar;
@@ -184,6 +188,7 @@ public class DB_GUI_Controller implements Initializable {
         clearForm();
         // Set the status message to inform the user about the success
         updateStatusMessage("Record added successfully!", "green");
+
     }
 
     // Clear Form Action
@@ -350,6 +355,90 @@ public class DB_GUI_Controller implements Initializable {
             this.major = venue;
         }
     }
+    @FXML
+    protected void importCsv() throws FileNotFoundException {
+        System.out.println("importCsv");
+
+        // Initialize the status message
+        String status = ""; // Declare status outside of try-catch to ensure it's always initialized
+
+        // Open file dialog to select CSV file
+        File file = (new FileChooser()).showOpenDialog(img_view.getScene().getWindow());
+
+        // If file is null (i.e., the user cancelled), just return
+        if (file == null) {
+            status = "No file selected.";
+            statusText.setText(status);  // Display the message
+            return;
+        }
+
+        // Try to read the CSV file
+        try (Scanner sc = new Scanner(file)) {
+            // Skip the header line if there is one
+            if (sc.hasNextLine()) {
+                sc.nextLine(); // Skips the first line (usually headers)
+            }
+
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                if (!line.isEmpty()) {
+                    String[] parts = line.split(",");
+                    if (parts.length == 5) {
+                        // Assuming Person constructor accepts 5 parameters
+                        cnUtil.insertUser(new Person(parts[0], parts[1], parts[2], parts[3], parts[4], ""));
+                    } else {
+                        // Handle invalid line (you could log this or notify the user)
+                        System.out.println("Invalid line: " + line);
+                    }
+                }
+            }
+            // If everything goes well, update status to success
+            status = "Imported CSV successfully.";
+            updateStatusMessage(status, "green");
+
+        } catch (Exception e) {
+            // In case of error, set the error message
+            status = "Error importing CSV. Do you have duplicate entries?";
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Set the status text based on the outcome
+        statusText.setText(status);  // Update status label with the status message
+        tv.setItems(cnUtil.getData()); // Update your table or view
+    }
+
+
+    @FXML
+    protected void exportCsv() {
+        String status = ""; // Declare the status variable to track success or failure
+        File file = new File("src/main/resources/export.csv");
+
+        // Using try-with-resources to ensure FileWriter is properly closed
+        try (FileWriter fw = new FileWriter(file)) {
+            // Write the header row for the CSV
+            fw.write("firstname,lastname,department,major,email\n");
+
+            // Write all users to the file (assuming cnUtil.stringAllUsers() returns CSV formatted data)
+            fw.write(cnUtil.stringAllUsers());
+
+            // Update status message upon successful export
+            status = "Exported to " + file.getAbsolutePath();
+            statusText.setText(status);  // Update the status in the UI
+
+            System.out.println(status); // Print the export path for confirmation
+
+        } catch (IOException e) {
+            // Handle any IO exceptions (file not found, permission issues, etc.)
+            status = "Error exporting CSV: " + e.getMessage();
+            statusText.setText(status);  // Update the status with the error message
+
+            // Log the exception for debugging purposes
+            System.err.println("Error exporting CSV: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     private Task<Void> createUploadTask(File file, ProgressBar progressBar) {
         return new Task<>() {

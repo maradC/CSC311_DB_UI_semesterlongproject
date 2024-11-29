@@ -13,7 +13,7 @@ import javafx.util.Duration;
 public class MainApplication extends Application {
 
     private static Scene scene;
-    private static DbConnectivityClass cnUtil;
+    public static DbConnectivityClass cnUtil;
     private Stage primaryStage;
 
     public static void main(String[] args) {
