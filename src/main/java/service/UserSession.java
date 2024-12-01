@@ -4,28 +4,32 @@ import java.util.prefs.Preferences;
 
 public class UserSession {
 
+    // Volatile ensures visibility and prevents instruction reordering
     private static volatile UserSession instance;
+
     private String userName;
     private String password;
     private String privileges;
 
-    // Private constructor to initialize session details
+    private final Preferences userPreferences = Preferences.userRoot(); // Initialize directly
+
+    // Private constructor to prevent direct instantiation
     private UserSession(String userName, String password, String privileges) {
         this.userName = userName;
         this.password = password;
         this.privileges = privileges;
-        Preferences userPreferences = Preferences.userRoot();
-        // Store user credentials and privileges in preferences (not secure, use hashing for password in production)
+
+        // Store user session data in preferences
         userPreferences.put("USERNAME", userName);
         userPreferences.put("PASSWORD", password);
         userPreferences.put("PRIVILEGES", privileges);
     }
 
-    // Singleton pattern: Create or return the existing instance
+    // Thread-safe Singleton initialization using Double-Checked Locking
     public static UserSession getInstance(String userName, String password, String privileges) {
-        if (instance == null) {  // First check (no synchronization needed)
+        if (instance == null) {
             synchronized (UserSession.class) {
-                if (instance == null) {  // Second check (synchronized block)
+                if (instance == null) {
                     instance = new UserSession(userName, password, privileges);
                 }
             }
@@ -33,9 +37,47 @@ public class UserSession {
         return instance;
     }
 
-    // Overloaded method: default privileges as "NONE"
+    // Overloaded method to create session with default privileges
     public static UserSession getInstance(String userName, String password) {
         return getInstance(userName, password, "NONE");
+    }
+
+    // Thread-safe method to clean the user session
+    public synchronized void cleanUserSession() {
+        this.userName = "";
+        this.password = "";
+        this.privileges = "";
+
+        userPreferences.remove("USERNAME");
+        userPreferences.remove("PASSWORD");
+        userPreferences.remove("PRIVILEGES");
+    }
+
+    // Thread-safe getters
+    public synchronized String getUserName() {
+        return this.userName;
+    }
+
+    public synchronized String getPassword() {
+        return this.password;
+    }
+
+    public synchronized String getPrivileges() {
+        return this.privileges;
+    }
+
+    // Check if a user is already signed in (optional utility method)
+    public boolean isUserSignedIn() {
+        return userPreferences.get("USERNAME", null) != null;
+    }
+
+    // Thread-safe toString method
+    @Override
+    public synchronized String toString() {
+        return "UserSession{" +
+                "userName='" + this.userName + '\'' +
+                ", privileges='" + this.privileges + '\'' +
+                '}';
     }
 
     // Static method to load session from preferences
@@ -49,34 +91,5 @@ public class UserSession {
             return null;  // No user data saved
         }
         return new UserSession(userName, password, privileges);
-    }
-
-    // Getter methods
-    public String getUserName() {
-        return this.userName;
-    }
-
-    public String getPassword() {
-        return this.password;
-    }
-
-    public String getPrivileges() {
-        return this.privileges;
-    }
-
-    // Method to clear user session data from preferences
-    public static void clearUserSession() {
-        Preferences userPreferences = Preferences.userRoot();
-        userPreferences.remove("USERNAME");
-        userPreferences.remove("PASSWORD");
-        userPreferences.remove("PRIVILEGES");
-    }
-
-    @Override
-    public String toString() {
-        return "UserSession{" +
-                "userName='" + this.userName + '\'' +
-                ", privileges='" + this.privileges + '\'' +
-                '}';
     }
 }

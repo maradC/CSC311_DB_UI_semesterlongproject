@@ -8,6 +8,9 @@ import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
@@ -16,6 +19,10 @@ import javafx.util.Duration;
 
 
 public class LoginController {
+    @FXML
+    private TextField usernameTextField;
+    @FXML
+    private PasswordField passwordField;
 
 
     @FXML
@@ -70,6 +77,35 @@ public class LoginController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    private boolean validateInputs() {
+        String username = usernameTextField.getText();
+        String password = passwordField.getText();
+
+        if (username == null || username.trim().isEmpty()) {
+            showAlert("Validation Error", "Username cannot be empty.");
+            return false;
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            showAlert("Validation Error", "Password cannot be empty.");
+            return false;
+        }
+
+        if (password.length() < 8 || !password.matches(".*[A-Z].*") || !password.matches(".*[0-9].*")) {
+            showAlert("Validation Error", "Password must be at least 8 characters long, contain one uppercase letter, and one number.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
 

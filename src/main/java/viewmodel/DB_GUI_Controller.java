@@ -268,9 +268,20 @@ public class DB_GUI_Controller implements Initializable {
 
             Task<Void> uploadTask = createUploadTask(file, progressBar);
             progressBar.progressProperty().bind(uploadTask.progressProperty());
+
+            // Add success and failure handlers for the upload task
+            uploadTask.setOnSucceeded(e -> {
+                updateStatusMessage("Upload completed successfully!", "green");
+            });
+
+            uploadTask.setOnFailed(e -> {
+                updateStatusMessage("Upload failed: " + uploadTask.getException().getMessage(), "red");
+            });
+
             new Thread(uploadTask).start();
         }
     }
+
 
     @FXML
     protected void addRecord() {
@@ -460,12 +471,18 @@ public class DB_GUI_Controller implements Initializable {
 
                         // Calculate and update progress as a percentage
                         int progress = (int) ((double) uploadedBytes / fileSize * 100);
-                        updateProgress(progress, 100);
+                        updateProgress(progress, 100); // Update progress
                     }
+                } catch (IOException e) {
+                    // Handle IO errors (e.g., file read errors, network issues)
+                    updateMessage("Error uploading file: " + e.getMessage());
+                    updateProgress(0, 100);  // Reset progress on failure
                 }
 
                 return null;
             }
         };
     }
+
 }
+

@@ -18,23 +18,21 @@ import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
 
 public class SignUpController {
+
     @FXML
-    public TextField usernameField;
+    private TextField usernameField;
     @FXML
-    public PasswordField passwordField;
+    private PasswordField passwordField;
     @FXML
-    public TextField dobField;  // TextField for DOB input (or use DatePicker if you prefer)
+    private TextField dobField;  // TextField for DOB input (or use DatePicker if you prefer)
     @FXML
-    public TextField ramIdField;
+    private TextField ramIdField;
 
     // Regex patterns for validation
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@farmingdale\\.edu$");  // Username like email
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("^[A-Za-z0-9]{6,25}$"); // Password should be 6-25 characters
     private static final Pattern DOB_PATTERN = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");  // Date format: YYYY-MM-DD
     private static final Pattern RAM_ID_PATTERN = Pattern.compile("^R\\d{8,10}$");  // RAM ID: Starts with 'R' followed by 8-10 digits
-
-    public SignUpController() {
-    }
 
     // Initialize the mouse click events for fields
     public void initialize() {
@@ -127,16 +125,27 @@ public class SignUpController {
         prefs.put("ramId", ramId);
 
         // Create a new UserSession instance and save session details
-        UserSession session = UserSession.getInstance(username, password, "NONE");
+        try {
+            UserSession session = UserSession.getInstance(username, password, "USER");
 
-        // Show success message
-        showAlert("Success", "Account created successfully!");
+            // Show success message
+            showAlert("Success", "Account created successfully!");
 
-        // Optionally clear the fields
-        usernameField.clear();
-        passwordField.clear();
-        dobField.clear();
-        ramIdField.clear();
+            // Optionally clear the fields
+            usernameField.clear();
+            passwordField.clear();
+            dobField.clear();
+            ramIdField.clear();
+
+            // Redirect to login page or dashboard (if needed)
+            goBack(actionEvent);
+
+        } catch (Exception e) {
+            // Handle any errors
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setContentText("Error creating account: " + e.getMessage());
+            alert.showAndWait();
+        }
     }
 
     // Helper method to show alert messages
