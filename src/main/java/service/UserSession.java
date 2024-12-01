@@ -80,16 +80,4 @@ public class UserSession {
                 '}';
     }
 
-    // Static method to load session from preferences
-    public static UserSession loadSessionFromPreferences() {
-        Preferences userPreferences = Preferences.userRoot();
-        String userName = userPreferences.get("USERNAME", "");
-        String password = userPreferences.get("PASSWORD", "");
-        String privileges = userPreferences.get("PRIVILEGES", "NONE");
-
-        if (userName.isEmpty() || password.isEmpty()) {
-            return null;  // No user data saved
-        }
-        return new UserSession(userName, password, privileges);
-    }
 }
