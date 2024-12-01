@@ -40,7 +40,7 @@
         <!-- Header Section -->
         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.columnSpan="6" GridPane.rowIndex="2">
             <children>
-                <Label alignment="CENTER" focusTraversable="false" prefHeight="74.0" prefWidth="1099.0" style="-fx-border-color: BLACK;" text="Sign Up New User Account" textFill="#1b0000">
+                <Label alignment="CENTER" focusTraversable="false" prefHeight="74.0" prefWidth="1099.0" style="-fx-border-color: BLACK;" text="Make Your Account For a Login" textFill="#1b0000">
                     <font>
                         <Font name="System Bold" size="36.0" />
                     </font>
@@ -85,7 +85,7 @@
         </VBox>
 
         <!-- Image Section with fsclogo.png -->
-        <ImageView fitHeight="184.0" fitWidth="162.0" GridPane.rowIndex="1">
+        <ImageView fitHeight="184.0" fitWidth="162.0" GridPane.rowIndex="7">
             <image>
                 <Image url="@../images/fsclogo.png" />
             </image>
@@ -94,7 +94,7 @@
             </effect>
         </ImageView>
 
-        <ImageView fitHeight="184.0" fitWidth="162.0" layoutX="11.0" layoutY="23.0" GridPane.columnIndex="5" GridPane.rowIndex="1">
+        <ImageView fitHeight="184.0" fitWidth="162.0" layoutX="11.0" layoutY="23.0" GridPane.columnIndex="5" GridPane.rowIndex="7">
             <image>
                 <Image url="@../images/fsclogo.png" />
             </image>

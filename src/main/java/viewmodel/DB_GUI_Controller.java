@@ -1,5 +1,9 @@
 package viewmodel;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import com.azure.storage.blob.BlobClient;
 import dao.DbConnectivityClass;
 import dao.StorageUploader;
@@ -29,10 +33,9 @@ import javafx.util.Duration;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.Optional;
-import java.util.ResourceBundle;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 public class DB_GUI_Controller implements Initializable {
@@ -64,7 +67,11 @@ public class DB_GUI_Controller implements Initializable {
     private ProgressBar progressBar;
 
     @FXML
-    private TextField first_name, last_name, department, major, email, imageURL;
+    private TextField first_name, last_name, department, major,email, imageURL;
+
+    @FXML
+    private Label statusBar;
+
     @FXML
     private ImageView img_view;
     @FXML
@@ -352,6 +359,57 @@ public class DB_GUI_Controller implements Initializable {
         });
     }
 
+    @FXML
+    public void generateReport(ActionEvent actionEvent) {
+        // Count the number of students by major
+        Map<String, Long> majorCounts = data.stream()
+                .collect(Collectors.groupingBy(Person::getMajor, Collectors.counting()));
+
+        // Generate the PDF
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+
+            // Create a content stream
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+
+            // Write to the PDF
+            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+            contentStream.beginText();
+            contentStream.setLeading(14.5f);
+            contentStream.newLineAtOffset(50, 750);
+
+            contentStream.showText("Report: Number of Students by Major");
+            contentStream.newLine();
+            contentStream.newLine();
+
+            // Add the data
+            contentStream.setFont(PDType1Font.HELVETICA, 12);
+            for (Map.Entry<String, Long> entry : majorCounts.entrySet()) {
+                contentStream.showText(entry.getKey() + ": " + entry.getValue() + " students");
+                contentStream.newLine();
+            }
+
+            contentStream.endText();
+            contentStream.close();
+
+            // Save the PDF to a file
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Save PDF Report");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+            File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
+
+            if (file != null) {
+                document.save(file);
+                statusBar.setText("Report saved successfully to: " + file.getAbsolutePath());
+            }
+
+        } catch (IOException e) {
+            statusBar.setText("Error generating the report.");
+            e.printStackTrace();
+        }
+    }
+
     private static enum Major {Business, CSC, CPIS}
 
     private static class Results {
@@ -368,85 +426,81 @@ public class DB_GUI_Controller implements Initializable {
     }
     @FXML
     protected void importCsv() throws FileNotFoundException {
-        System.out.println("importCsv");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import CSV File");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        File file = fileChooser.showOpenDialog(menuBar.getScene().getWindow());
 
-        // Initialize the status message
-        String status = ""; // Declare status outside of try-catch to ensure it's always initialized
+        if (file != null) {
+            try {
+                ObservableList<Person> importedData = FXCollections.observableArrayList();
+                List<String> lines = Files.readAllLines(file.toPath());
 
-        // Open file dialog to select CSV file
-        File file = (new FileChooser()).showOpenDialog(img_view.getScene().getWindow());
+                for (String line : lines) {
+                    String[] values = line.split(","); // Assuming CSV fields are comma-separated
 
-        // If file is null (i.e., the user cancelled), just return
-        if (file == null) {
-            status = "No file selected.";
-            statusText.setText(status);  // Display the message
-            return;
-        }
-
-        // Try to read the CSV file
-        try (Scanner sc = new Scanner(file)) {
-            // Skip the header line if there is one
-            if (sc.hasNextLine()) {
-                sc.nextLine(); // Skips the first line (usually headers)
-            }
-
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                if (!line.isEmpty()) {
-                    String[] parts = line.split(",");
-                    if (parts.length == 5) {
-                        // Assuming Person constructor accepts 5 parameters
-                        cnUtil.insertUser(new Person(parts[0], parts[1], parts[2], parts[3], parts[4], ""));
-                    } else {
-                        // Handle invalid line (you could log this or notify the user)
-                        System.out.println("Invalid line: " + line);
+                    // Validate each row in the CSV file
+                    if (values.length != 6 || Arrays.stream(values).anyMatch(String::isBlank)) {
+                        throw new IllegalArgumentException("Invalid CSV format in row: " + line);
                     }
+
+                    // Create a Person object from valid data
+                    Person person = new Person(values[0], values[1], values[2], values[3], values[4], values[5]);
+                    importedData.add(person);
                 }
+
+                // Add imported data to table and database
+                for (Person person : importedData) {
+                    cnUtil.insertUser(person);
+                    cnUtil.retrieveId(person);
+                    person.setId(cnUtil.retrieveId(person));
+                }
+                data.addAll(importedData);
+                tv.setItems(data);
+
+                statusBar.setText("CSV file imported successfully.");
+            } catch (IllegalArgumentException e) {
+                statusBar.setText("Error importing CSV: " + e.getMessage());
+            } catch (Exception e) {
+                statusBar.setText("Error importing CSV file.");
+                e.printStackTrace();
             }
-            // If everything goes well, update status to success
-            status = "Imported CSV successfully.";
-            updateStatusMessage(status, "green");
-
-        } catch (Exception e) {
-            // In case of error, set the error message
-            status = "Error importing CSV. Do you have duplicate entries?";
-            System.err.println(e.getMessage());
-            e.printStackTrace();
         }
-
-        // Set the status text based on the outcome
-        statusText.setText(status);  // Update status label with the status message
-        tv.setItems(cnUtil.getData()); // Update your table or view
     }
-
-
     @FXML
-    protected void exportCsv() {
-        String status = ""; // Declare the status variable to track success or failure
-        File file = new File("src/main/resources/export.csv");
+    protected void exportCsv(ActionEvent actionEvent) {
+        // Open a FileChooser to select the save location
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        fileChooser.setTitle("Save CSV File");
+        File file = fileChooser.showSaveDialog(menuBar.getScene().getWindow());
 
-        // Using try-with-resources to ensure FileWriter is properly closed
-        try (FileWriter fw = new FileWriter(file)) {
-            // Write the header row for the CSV
-            fw.write("firstname,lastname,department,major,email\n");
+        if (file != null) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+                // Write the CSV header (column names)
+                writer.write("First Name,Last Name,Department,Major,Email,Image URL\n");
 
-            // Write all users to the file (assuming cnUtil.stringAllUsers() returns CSV formatted data)
-            fw.write(cnUtil.stringAllUsers());
+                // Iterate over the data list (ObservableList<Person>) and write each person's data
+                for (Person person : data) {
+                    writer.write(String.join(",",
+                            person.getFirstName(),
+                            person.getLastName(),
+                            person.getDepartment(),
+                            person.getMajor(),
+                            person.getEmail(),
+                            person.getImageURL())
+                    );
+                    writer.newLine();
+                }
 
-            // Update status message upon successful export
-            status = "Exported to " + file.getAbsolutePath();
-            statusText.setText(status);  // Update the status in the UI
+                // Update status message
+                updateStatusMessage("CSV file exported successfully.", "green");
 
-            System.out.println(status); // Print the export path for confirmation
-
-        } catch (IOException e) {
-            // Handle any IO exceptions (file not found, permission issues, etc.)
-            status = "Error exporting CSV: " + e.getMessage();
-            statusText.setText(status);  // Update the status with the error message
-
-            // Log the exception for debugging purposes
-            System.err.println("Error exporting CSV: " + e.getMessage());
-            e.printStackTrace();
+            } catch (IOException e) {
+                // Handle any errors during file writing
+                updateStatusMessage("Error exporting CSV file.", "red");
+                e.printStackTrace();
+            }
         }
     }
 
@@ -485,4 +539,3 @@ public class DB_GUI_Controller implements Initializable {
     }
 
 }
-
